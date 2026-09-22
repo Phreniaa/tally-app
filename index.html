@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-mode="light" data-accent="moss" data-density="comfortable">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tally — habit log</title>
+<meta name="description" content="A private daily habit log. Everything stays in this browser.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#E9ECE6">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#app-main">Skip to main content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.2 5.2L20 6.9"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 7V5h4v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+    <symbol id="i-rest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v18M4 7.5l16 9M20 7.5l-16 9"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.2A8.4 8.4 0 0 1 9.8 4 8.5 8.5 0 1 0 20 14.2z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/></symbol>
+    <symbol id="i-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17" /><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v4H3zM5 11v9h14v-9M10 15h4"/></symbol>
+    <symbol id="i-down-tray" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 10.5L12 15l4.5-4.5M4 20h16"/></symbol>
+    <symbol id="i-up-tray" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7.5 8.5L12 4l4.5 4.5M4 20h16"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="8.7" cy="9.8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.3" cy="9.8" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="15.4" r="1.1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 5.5v15"/><path d="M9 8h7M9 12h5"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="brand">
+      <h1>Tally</h1>
+      <span class="date" id="head-date"></span>
+      <span class="local-status" title="Your habits stay in this browser">Saved locally</span>
+    </div>
+    <div class="tools">
+      <button class="icon-btn" id="theme-btn" data-act="cycle-theme" title="Theme" aria-label="Change theme"><svg><use href="#i-sun"/></svg></button>
+      <button class="icon-btn" data-act="open-appear" title="Appearance" aria-label="Appearance"><svg><use href="#i-palette"/></svg></button>
+      <button class="icon-btn" data-act="open-data" title="Your data" aria-label="Your data"><svg><use href="#i-file"/></svg></button>
+      <button class="btn btn-primary" data-act="new-habit"><svg><use href="#i-plus"/></svg>New habit</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button class="tab" role="tab" id="tab-today" data-act="view" data-view="today" aria-controls="view-today" aria-selected="true" tabindex="0">Daily</button>
+    <button class="tab" role="tab" id="tab-grid" data-act="view" data-view="grid" aria-controls="view-grid" aria-selected="false" tabindex="-1">Grid</button>
+    <button class="tab" role="tab" id="tab-stats" data-act="view" data-view="stats" aria-controls="view-stats" aria-selected="false" tabindex="-1">Stats</button>
+    <button class="tab" role="tab" id="tab-log" data-act="view" data-view="log" aria-controls="view-log" aria-selected="false" tabindex="-1">Logbook</button>
+  </nav>
+
+  <main id="app-main">
+  <section id="view-today" role="tabpanel" aria-labelledby="tab-today" aria-label="Daily habits">
+    <div class="ledger-head">
+      <div class="count"><b id="t-done">0</b><span id="t-of">of 0 done today</span></div>
+    </div>
+
+    <div class="banner hide" id="backup-banner">
+      <span><strong>Saved locally.</strong> Download a backup to move your habits or recover them later.</span>
+      <button class="btn btn-sm" data-act="export"><svg><use href="#i-down-tray"/></svg>Download backup</button>
+    </div>
+
+    <div class="toolbar" id="t-toolbar">
+      <div class="pills">
+        <button class="pill" data-act="t-filter" data-filter="all" aria-pressed="true">All</button>
+        <button class="pill" data-act="t-filter" data-filter="left" aria-pressed="false">Left</button>
+        <button class="pill" data-act="t-filter" data-filter="done" aria-pressed="false">Done</button>
+      </div>
+      <div class="right">
+        <span class="count-sub" id="t-offday"></span>
+      </div>
+    </div>
+
+    <div class="sheet" id="t-list"></div>
+    <div class="sheet hide" id="t-empty"></div>
+  </section>
+
+  <section id="view-grid" role="tabpanel" aria-labelledby="tab-grid" aria-label="Habit history grid" class="hide">
+    <div class="toolbar">
+      <div class="pills" id="g-cats"></div>
+      <div class="right">
+        <label class="search">
+          <span class="sr">Find a habit</span>
+          <svg><use href="#i-search"/></svg>
+          <input type="text" id="g-search" name="habit-search" placeholder="Find a habit…" autocomplete="off">
+        </label>
+        <button class="pill" id="g-archived" data-act="toggle-archived" aria-pressed="false">Archived</button>
+      </div>
+    </div>
+    <div class="sheet" id="g-list"></div>
+    <div class="sheet hide" id="g-empty"></div>
+  </section>
+
+  <section id="view-stats" role="tabpanel" aria-labelledby="tab-stats" aria-label="Habit statistics" class="hide">
+    <div class="toolbar">
+      <div class="pills" id="s-horizon">
+        <button class="pill" data-act="horizon" data-h="7" aria-pressed="false">7 days</button>
+        <button class="pill" data-act="horizon" data-h="30" aria-pressed="true">30 days</button>
+        <button class="pill" data-act="horizon" data-h="90" aria-pressed="false">90 days</button>
+        <button class="pill" data-act="horizon" data-h="all" aria-pressed="false">All time</button>
+      </div>
+      <div class="right">
+        <span class="count-sub" id="s-range"></span>
+        <button class="pill" data-act="open-cards">Edit cards</button>
+      </div>
+    </div>
+    <div id="s-body"></div>
+  </section>
+
+  <section id="view-log" role="tabpanel" aria-labelledby="tab-log" aria-label="Habit logbook" class="hide">
+    <div class="toolbar">
+      <div class="pills" id="l-habits"></div>
+      <label class="search">
+        <span class="sr">Search notes</span>
+        <svg><use href="#i-search"/></svg>
+        <input type="text" id="l-search" name="note-search" placeholder="Search notes…" autocomplete="off">
+      </label>
+    </div>
+    <div class="sheet" id="l-list"></div>
+    <div class="sheet hide" id="l-empty"></div>
+  </section>
+  </main>
+</div>
+
+<div class="scrim hide" id="m-day" role="dialog" aria-modal="true" aria-labelledby="m-day-title">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="m-day-title">Habit</h2>
+        <p id="m-day-date"></p>
+      </div>
+      <button class="icon-btn" data-act="close" data-modal="m-day" aria-label="Close"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <form id="m-day-form">
+      <div class="modal-body">
+        <div id="m-day-entry"></div>
+        <div class="field">
+          <label for="m-day-note">Note</label>
+          <textarea id="m-day-note" name="day-note" rows="2" placeholder="What happened? (optional)…"></textarea>
+          <span class="help">Notes show up in your Logbook. They survive toggling the day on and off.</span>
+        </div>
+        <button type="button" class="btn" id="m-day-rest" data-act="toggle-rest" style="width:100%;justify-content:center">
+          <svg><use href="#i-rest"/></svg><span id="m-day-rest-txt">Mark as a rest day</span>
+        </button>
+        <p class="help" id="m-day-rest-help" style="font-size:12px;color:var(--ink-3);margin-top:-8px"></p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-danger btn-sm spacer" data-act="clear-day">Clear day</button>
+        <button type="button" class="btn" data-act="close" data-modal="m-day">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="scrim hide" id="m-habit" role="dialog" aria-modal="true" aria-labelledby="m-habit-title">
+  <div class="modal wide">
+    <div class="modal-head">
+      <h2 id="m-habit-title">New habit</h2>
+      <button class="icon-btn" data-act="close" data-modal="m-habit" aria-label="Close"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <form id="m-habit-form">
+      <div class="modal-body">
+        <input type="hidden" id="h-id">
+        <div class="field">
+          <label for="h-name">Name</label>
+          <input type="text" id="h-name" name="habit-name" required maxlength="60" placeholder="Read, train, apply to jobs…">
+        </div>
+
+        <div class="field">
+          <span class="field-label">How do you track it?</span>
+          <div class="seg" id="h-type">
+            <button type="button" data-act="h-type" data-type="binary" aria-pressed="true">Done or not</button>
+            <button type="button" data-act="h-type" data-type="numeric" aria-pressed="false">Count to a target</button>
+          </div>
+        </div>
+
+        <div class="two hide" id="h-numeric">
+          <div class="field">
+            <label for="h-target">Daily target</label>
+            <input type="number" id="h-target" name="habit-target" min="0.5" step="any" placeholder="30">
+          </div>
+          <div class="field">
+            <label for="h-unit">Unit</label>
+            <input type="text" id="h-unit" name="habit-unit" maxlength="16" placeholder="pages, minutes, km">
+          </div>
+        </div>
+
+        <details class="advanced-options" id="h-more-options">
+          <summary>More options <span>Schedule, rest days, and appearance</span></summary>
+          <div class="advanced-options-body">
+            <div class="field">
+              <span class="field-label">Which days does it count?</span>
+              <div class="dow" id="h-days"></div>
+              <span class="help">Days you switch off aren't counted as misses or streak breaks.</span>
+            </div>
+
+            <div class="field">
+              <label for="h-rest-limit">Rest days per month</label>
+              <input type="number" id="h-rest-limit" name="habit-rest-limit" min="0" max="31" step="1" placeholder="4">
+              <span class="help">Optional. Set 0 to disallow rest days.</span>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Icon <span style="font-weight:400;color:var(--ink-3)">— optional</span></span>
+              <div class="emoji-grid" id="h-emoji"></div>
+              <div style="display:flex;gap:6px;margin-top:6px">
+                <input type="text" id="h-icon-custom" name="habit-icon" maxlength="6" placeholder="Or type any emoji…" style="flex:1">
+                <button type="button" class="btn btn-sm" data-act="h-icon-clear">Clear</button>
+              </div>
+            </div>
+
+            <div class="two">
+              <div class="field">
+                <label for="h-category">Group</label>
+                <input type="text" id="h-category" name="habit-category" list="cat-list" maxlength="24" placeholder="Health">
+                <datalist id="cat-list"></datalist>
+              </div>
+              <div class="field">
+                <span class="field-label">Colour</span>
+                <div class="swatches" id="h-colors"></div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="h-desc">Why it matters</label>
+              <input type="text" id="h-desc" name="habit-reason" maxlength="90" placeholder="Optional — a reason to return on a bad day">
+            </div>
+            <div class="field">
+              <label for="h-donemsg">Shown when it's done</label>
+              <input type="text" id="h-donemsg" name="habit-done-message" maxlength="60" placeholder="Optional — a short message like “Nice.”">
+              <span class="help">This replaces the default encouragement shown after you complete it.</span>
+            </div>
+          </div>
+        </details>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-sm spacer hide" id="h-archive" data-act="archive">Archive</button>
+        <button type="button" class="btn btn-sm spacer hide" id="h-phase" data-act="phase">Start new phase</button>
+        <button type="button" class="btn" data-act="close" data-modal="m-habit">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save habit</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="scrim hide" id="m-appear" role="dialog" aria-modal="true" aria-labelledby="m-appear-title">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="m-appear-title">Appearance</h2>
+        <p>Theme, accent, and density.</p>
+      </div>
+      <button class="icon-btn" data-act="close" data-modal="m-appear" aria-label="Close"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <span class="field-label">Theme</span>
+        <div class="seg-wrap" id="a-theme">
+          <button type="button" data-act="theme-set" data-v="auto">Auto</button>
+          <button type="button" data-act="theme-set" data-v="light">Light</button>
+          <button type="button" data-act="theme-set" data-v="warm">Warm</button>
+          <button type="button" data-act="theme-set" data-v="dark">Dark</button>
+          <button type="button" data-act="theme-set" data-v="dim">Dim</button>
+        </div>
+        <span class="help">Auto follows your system. Warm is a cream-and-brown light. Dim is a softer dark.</span>
+      </div>
+      <div class="field">
+        <span class="field-label">Accent</span>
+        <div class="swatches accents" id="a-accents"></div>
+        <span class="help">Buttons, active states, and chart bars. Habit colours stay as you set them.</span>
+      </div>
+      <div class="field">
+        <span class="field-label">Density</span>
+        <div class="seg" id="a-density">
+          <button type="button" data-act="density" data-v="comfortable" aria-pressed="true">Comfortable</button>
+          <button type="button" data-act="density" data-v="compact" aria-pressed="false">Compact</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-act="close" data-modal="m-appear">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim hide" id="m-cards" role="dialog" aria-modal="true" aria-labelledby="m-cards-title">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="m-cards-title">Stats cards</h2>
+        <p>Choose what appears at the top of Stats. Charts below stay put.</p>
+      </div>
+      <button class="icon-btn" data-act="close" data-modal="m-cards" aria-label="Close"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="check-list" id="c-cards"></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-sm spacer" data-act="cards-reset">Reset to default</button>
+      <button type="button" class="btn btn-primary" data-act="close" data-modal="m-cards">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim hide" id="m-data" role="dialog" aria-modal="true" aria-labelledby="m-data-title">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="m-data-title">Your data</h2>
+        <p>Saved in this browser only. Nothing is uploaded.</p>
+      </div>
+
+      <div class="scrim hide" id="m-import" role="dialog" aria-modal="true" aria-labelledby="m-import-title">
+        <div class="modal" style="max-width:420px">
+          <div class="modal-head">
+            <div>
+              <h2 id="m-import-title">Import your data</h2>
+              <p id="m-import-summary">Choose how this file should be added.</p>
+            </div>
+            <button class="icon-btn" data-act="close" data-modal="m-import" aria-label="Close"><svg><use href="#i-x"/></svg></button>
+          </div>
+          <div class="modal-body">
+            <button class="import-choice" data-act="import-replace">
+              <strong>Replace everything</strong>
+              <span>Restore this backup as the complete Tally library. Your current data will be overwritten.</span>
+            </button>
+            <button class="import-choice" data-act="import-merge">
+              <strong>Merge with current data</strong>
+              <span>Add new habits and combine matching habits by ID, including entries, notes, and rest days.</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <button class="icon-btn" data-act="close" data-modal="m-data" aria-label="Close"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p class="callout" id="d-size"></p>
+    <p class="callout"><strong>Private by default.</strong> Your habits stay on this device; nothing is uploaded. Download a backup to move them to another browser or recover them if browser data is cleared.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" data-act="export"><svg><use href="#i-down-tray"/></svg>Download backup</button>
+      <button class="btn" data-act="import"><svg><use href="#i-up-tray"/></svg>Import file</button>
+        <input type="file" id="d-file" accept=".json,application/json" class="hide">
+      </div>
+      <p class="help" style="font-size:12px;color:var(--ink-3)">When you choose Import file, you can replace the current library or merge it with the backup.</p>
+      <div style="border-top:1px solid var(--rule);padding-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-sm" data-act="sample">Load example habits</button>
+        <button class="btn btn-sm btn-danger" data-act="reset">Delete everything</button>
+      </div>
+      <p class="help" style="font-size:12px;color:var(--ink-3)">Shortcuts: 1–4 switch views. N adds a habit. In Grid, press Enter on a day for details or click to toggle it.</p>
+    </div>
+  </div>
+</div>
+
+<div class="scrim hide" id="m-confirm" role="dialog" aria-modal="true" aria-labelledby="c-title">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head"><h2 id="c-title">Are you sure?</h2></div>
+    <div class="modal-body"><p id="c-msg" style="font-size:13.5px;color:var(--ink-2)"></p></div>
+    <div class="modal-foot">
+      <button class="btn" data-act="close" data-modal="m-confirm">Cancel</button>
+      <button class="btn btn-primary" id="c-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="tip" class="hide" role="status"></div>
+<div id="toasts" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

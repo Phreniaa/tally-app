@@ -1,0 +1,17 @@
+{
+  "name": "Tally — habit log",
+  "short_name": "Tally",
+  "description": "A private daily habit log.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#E9ECE6",
+  "theme_color": "#E9ECE6",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
