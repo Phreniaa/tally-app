@@ -252,6 +252,12 @@ main { display: block; }
 }
 .pill:hover { color: var(--ink); background: var(--sheet); }
 .pill[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); font-weight: 500; }
+.filter-select select {
+    min-width: 148px; height: 31px; padding: 0 28px 0 10px;
+    border: 1px solid var(--rule-2); border-radius: 4px;
+    background: var(--sheet); color: var(--ink); font-size: 13px;
+}
+.filter-select select:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
 
 /* ---------- habit rows ---------- */
 .sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; }
@@ -373,8 +379,14 @@ html[data-mode="dark"] .check.on { color: var(--ground); }
 .stat-line b { color: var(--ink); font-weight: 600; }
 
 .grid-scroll { overflow-x: auto; padding-bottom: 6px; }
-.grid-scroll::-webkit-scrollbar { height: 6px; }
-.grid-scroll::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 99px; }
+.grid-scroll, .modal, .scrim, .emoji-grid {
+    scrollbar-color: var(--rule-2) transparent;
+    scrollbar-width: thin;
+}
+.grid-scroll::-webkit-scrollbar, .modal::-webkit-scrollbar, .scrim::-webkit-scrollbar, .emoji-grid::-webkit-scrollbar { width: 8px; height: 8px; }
+.grid-scroll::-webkit-scrollbar-track, .modal::-webkit-scrollbar-track, .scrim::-webkit-scrollbar-track, .emoji-grid::-webkit-scrollbar-track { background: transparent; }
+.grid-scroll::-webkit-scrollbar-thumb, .modal::-webkit-scrollbar-thumb, .scrim::-webkit-scrollbar-thumb, .emoji-grid::-webkit-scrollbar-thumb { background: var(--rule-2); border: 2px solid transparent; border-radius: 6px; background-clip: padding-box; }
+.grid-scroll::-webkit-scrollbar-thumb:hover, .modal::-webkit-scrollbar-thumb:hover, .scrim::-webkit-scrollbar-thumb:hover, .emoji-grid::-webkit-scrollbar-thumb:hover { background: var(--ink-3); border-width: 1px; }
 .grid-inner { display: inline-flex; gap: 6px; }
 .grid-gutter { display: grid; grid-template-rows: repeat(7, var(--cell)); gap: var(--cell-gap); width: 26px; flex: none; }
 .grid-gutter span { font-size: 9px; color: var(--ink-3); line-height: var(--cell); text-align: right; }
@@ -418,6 +430,7 @@ html[data-mode="dark"] .check.on { color: var(--ground); }
 }
 .search input:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
 .search svg { position: absolute; left: 9px; top: 8px; width: 14px; height: 14px; color: var(--ink-3); }
+.icon-clear { margin-top: 8px; }
 
 /* ---------- logbook ---------- */
 .log-day { border-bottom: 1px solid var(--rule); }
@@ -451,9 +464,15 @@ html[data-mode="dark"] .check.on { color: var(--ground); }
 .panel > h3 { font-size: 14.5px; margin-bottom: 2px; }
 .panel > .hint { font-size: 12.5px; color: var(--ink-3); margin-bottom: 16px; }
 .hbars { display: flex; align-items: flex-end; gap: 2px; height: 132px; border-bottom: 1px solid var(--rule-2); padding-bottom: 1px; overflow: hidden; }
-.hbars i { flex: 1 1 0; min-width: 2px; display: block; background: var(--accent); border-radius: 2px 2px 0 0; opacity: .85; }
+.hbars i { position: relative; flex: 1 1 0; min-width: 2px; display: block; background: var(--accent); border-radius: 2px 2px 0 0; opacity: .85; }
 .hbars i:hover { opacity: 1; }
 .hbars i.zero { background: var(--rule-2); }
+.hbar-value { display: block; position: absolute; left: 50%; bottom: calc(100% + 5px); transform: translateX(-50%); font-size: 10px; font-weight: 600; color: var(--ink-2); white-space: nowrap; opacity: 0; }
+.hbars:not(.dense) .hbar-value { opacity: 1; }
+.hbar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hbar:hover .hbar-value, .hbar:focus-visible .hbar-value { opacity: 1; }
+.chart-summary { display: flex; align-items: baseline; gap: 8px; margin: -4px 0 12px; color: var(--ink-3); font-size: 12px; }
+.chart-summary b { color: var(--ink); font: 600 20px/1.15 ui-monospace, monospace; }
 .xlabels { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--ink-3); margin-top: 7px; }
 
 .wbars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; height: 150px; }

@@ -4,14 +4,35 @@ Tally is a private, browser-only habit log. It has no build step and no
 third-party dependencies, so it can be opened directly from `index.html` or
 served as a static site.
 
+## Hosting
+
+The repository includes a GitHub Actions workflow at
+`.github/workflows/deploy-pages.yml`. To publish it:
+
+1. Push the repository to GitHub.
+2. In **Settings → Pages**, set **Build and deployment** to **GitHub Actions**.
+3. Push to `main`, or run **Deploy Tally to GitHub Pages** from the Actions tab.
+4. Open the Pages URL on your phone and use the browser's **Add to Home Screen**
+   or **Install app** action.
+
+GitHub Pages hosts the app files, but it does not synchronize Tally's data.
+Tally currently stores data in each browser's local storage. Cross-device sync
+requires an authenticated data service (for example, a Supabase or Firebase
+project) and a conflict/merge policy; do not put private database credentials
+in this static repository. Until that backend is configured, use the existing
+backup export/import flow to move data between devices.
+
 ## Project layout
 
 - `index.html` contains the document structure, accessible labels, dialogs,
   and inline SVG symbols.
 - `styles.css` contains design tokens, layout, responsive rules, and component
   styles. Prefer existing CSS variables over adding one-off colours.
-- `app.js` contains state, persistence, rendering, event handling, and habit
-  calculations.
+- `app.js` contains UI state, rendering, event handling, and view calculations.
+- `core.js` contains pure habit normalization and merge rules shared by the app
+  and automated tests.
+- `storage.js` contains versioned persistence, recovery snapshots, and import
+  validation.
 - `manifest.webmanifest` and `icon.svg` support installation and browser
   identity.
 
@@ -33,7 +54,8 @@ served as a static site.
 Editing the JavaScript should still pass a syntax check:
 
 ```powershell
-node --check .\app.js
+npm test
+npm run check
 ```
 
 Then open `index.html` and verify: create a habit using the short form, expand

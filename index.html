@@ -90,7 +90,10 @@
 
   <section id="view-grid" role="tabpanel" aria-labelledby="tab-grid" aria-label="Habit history grid" class="hide">
     <div class="toolbar">
-      <div class="pills" id="g-cats"></div>
+      <label class="filter-select">
+        <span class="sr">Filter by category</span>
+        <select id="g-cats" data-act="cat-filter" aria-label="Filter by category"></select>
+      </label>
       <div class="right">
         <label class="search">
           <span class="sr">Find a habit</span>
@@ -114,7 +117,7 @@
       </div>
       <div class="right">
         <span class="count-sub" id="s-range"></span>
-        <button class="pill" data-act="open-cards">Edit cards</button>
+        <button class="pill" data-act="open-cards">Choose metrics</button>
       </div>
     </div>
     <div id="s-body"></div>
@@ -122,7 +125,10 @@
 
   <section id="view-log" role="tabpanel" aria-labelledby="tab-log" aria-label="Habit logbook" class="hide">
     <div class="toolbar">
-      <div class="pills" id="l-habits"></div>
+      <label class="filter-select">
+        <span class="sr">Filter by habit</span>
+        <select id="l-habits" data-act="log-filter" aria-label="Filter by habit"></select>
+      </label>
       <label class="search">
         <span class="sr">Search notes</span>
         <svg><use href="#i-search"/></svg>
@@ -217,15 +223,13 @@
             <div class="field">
               <span class="field-label">Icon <span style="font-weight:400;color:var(--ink-3)">— optional</span></span>
               <div class="emoji-grid" id="h-emoji"></div>
-              <div style="display:flex;gap:6px;margin-top:6px">
-                <input type="text" id="h-icon-custom" name="habit-icon" maxlength="6" placeholder="Or type any emoji…" style="flex:1">
-                <button type="button" class="btn btn-sm" data-act="h-icon-clear">Clear</button>
-              </div>
+              <button type="button" class="btn btn-sm icon-clear" data-act="h-icon-clear">Remove icon</button>
+              <span class="help">Choose one from the grid, or leave it blank.</span>
             </div>
 
             <div class="two">
               <div class="field">
-                <label for="h-category">Group</label>
+                <label for="h-category">Category</label>
                 <input type="text" id="h-category" name="habit-category" list="cat-list" maxlength="24" placeholder="Health">
                 <datalist id="cat-list"></datalist>
               </div>
@@ -379,6 +383,8 @@
 <div id="tip" class="hide" role="status"></div>
 <div id="toasts" role="status" aria-live="polite" aria-atomic="true"></div>
 
+<script src="core.js"></script>
+<script src="storage.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
