@@ -44,17 +44,17 @@ const ACCENTS = [
 const METRIC_DEFS = [
   { key: 'consistency',     label: 'Consistency',     hint: 'Share of scheduled days you finished' },
   { key: 'cleanDays',       label: 'Fully handled days', hint: 'Every scheduled habit handled' },
-  { key: 'checkins',        label: 'Check-ins',       hint: 'Days with something logged, in range' },
+  { key: 'checkins',        label: 'Check-ins',       hint: 'Scheduled days you logged something' },
   { key: 'restDays',        label: 'Rest days',       hint: 'Taken on purpose, not counted as misses' },
   { key: 'currentStreak',   label: 'Longest streak',  hint: 'Best run going right now, across habits' },
   { key: 'bestDay',         label: 'Best single day', hint: 'Most habits handled in one day' },
   { key: 'daysSinceClean',  label: 'Days since fully handled', hint: 'How long since every scheduled habit was handled' },
   { key: 'lifetime',        label: 'Lifetime check-ins', hint: 'All time, across every habit' },
-  { key: 'restLeft',        label: 'Rest days left',  hint: 'Remaining this month' },
+  { key: 'restLeft',        label: 'Rest days remaining',  hint: 'Remaining this month' },
   { key: 'improved',        label: 'Most improved',   hint: 'Biggest jump vs the previous period' }
 ];
 const METRIC_KEYS = METRIC_DEFS.map(m => m.key);
-const DEFAULT_CARDS = ['consistency', 'cleanDays', 'checkins', 'restDays'];
+const DEFAULT_CARDS = ['consistency', 'cleanDays', 'checkins', 'currentStreak'];
 
 const $ = id => document.getElementById(id);
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
@@ -79,6 +79,7 @@ function human(n) { return n >= 100 ? String(Math.round(n)) : String(round(n)); 
 function longDate(d) { return d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }); }
 function shortDate(d) { return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }); }
 function medDate(d) { return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }); }
+function logDate(d) { return d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
 
 const state = {
     theme: 'auto',
@@ -157,24 +158,11 @@ function normHabit(raw, i) {
 }
 
 function load() {
-    let raw = null;
-    try { raw = localStorage.getItem(KEY); } catch (e) { }
-    if (!raw) {
-        let old = null;
-        try { old = localStorage.getItem(LEGACY_KEY); } catch (e) { }
-        if (old) {
-            try {
-                const p = JSON.parse(old);
-                state.habits = (Array.isArray(p.habits) ? p.habits : []).map(normHabit);
-                save();
-                setTimeout(() => toast('Brought over ' + state.habits.length + ' habits from the old version.'), 400);
-            } catch (e) { state.habits = []; }
-        }
-        return;
-    }
     try {
-        const p = JSON.parse(raw);
-        state.habits = (Array.isArray(p.habits) ? p.habits : []).map(normHabit);
+        const result = TallyStorage.read(localStorage, KEY, LEGACY_KEY);
+        const p = result.value;
+        if (!p) return;
+        state.habits = p.habits.map(normHabit);
         if (THEME_CYCLE.includes(p.theme)) state.theme = p.theme;
         if (ACCENTS.some(a => a.id === p.accent)) state.accent = p.accent;
         if (['comfortable', 'compact'].includes(p.density)) state.density = p.density;
@@ -185,19 +173,31 @@ function load() {
             const valid = p.statsCards.filter(k => METRIC_KEYS.includes(k));
             if (valid.length) state.statsCards = [...new Set(valid)];
         }
-    } catch (e) { console.error('Could not read saved data', e); }
+        if (result.recovered) setTimeout(() => toast('Recovered your last saved backup.'), 400);
+        if (result.migrated) {
+            save();
+            setTimeout(() => toast('Brought over ' + state.habits.length + ' habits from the old version.'), 400);
+        }
+    } catch (e) {
+        state.habits = [];
+        console.error('Could not read saved data:', e);
+        toast("Couldn't read saved data. Your data was left untouched.");
+    }
 }
 
 function save() {
     statsCache = new Map();
     try {
-        localStorage.setItem(KEY, JSON.stringify({
+        TallyStorage.write(localStorage, KEY, {
             theme: state.theme, accent: state.accent, density: state.density,
             view: state.view, todayFilter: state.todayFilter,
             horizon: state.horizon, statsCards: state.statsCards,
             habits: state.habits
-        }));
-    } catch (e) { toast("Couldn't save — this browser's storage is full or blocked."); }
+        });
+    } catch (e) {
+        console.error('Could not save data:', e);
+        toast("Couldn't save — this browser's storage is full or blocked.");
+    }
 }
 
 function scheduled(h, d) { return h.days.includes(dow(d)); }
@@ -450,8 +450,9 @@ function renderGrid() {
     const cats = ['All', ...new Set(state.habits.filter(h => state.showArchived || !h.archived).map(h => h.category))];
     if (!cats.includes(state.category)) state.category = 'All';
     $('g-cats').innerHTML = cats.map(c =>
-        `<button class="pill" data-act="cat" data-cat="${esc(c)}" aria-pressed="${c === state.category}">${esc(c)}</button>`
+        `<option value="${esc(c)}">${esc(c === 'All' ? 'All categories' : c)}</option>`
     ).join('');
+    $('g-cats').value = state.category;
     $('g-archived').setAttribute('aria-pressed', String(state.showArchived));
 
     const q = state.query;
@@ -627,9 +628,11 @@ function renderLog() {
 
     const pillBox = $('l-habits');
     if (!habits.length) pillBox.innerHTML = '';
-    else pillBox.innerHTML =
-        `<button class="pill" data-act="l-habit" data-id="all" aria-pressed="${state.logFilter === 'all'}">All</button>` +
-        habits.map(h => `<button class="pill" data-act="l-habit" data-id="${h.id}" aria-pressed="${state.logFilter === h.id}">${esc(h.name)}</button>`).join('');
+    else {
+        pillBox.innerHTML = '<option value="all">All habits</option>' +
+            habits.map(h => `<option value="${esc(h.id)}">${esc(h.name)}</option>`).join('');
+        pillBox.value = state.logFilter;
+    }
 
     const q = state.logQuery;
     const entries = [];
@@ -683,9 +686,9 @@ function renderLog() {
     const tKey = key(today());
     box.innerHTML = [...days.entries()].map(([k, list]) => {
         const d = parseKey(k);
-        const heading = k === tKey ? 'Today' : medDate(d);
+        const heading = k === tKey ? 'Today' : logDate(d);
         return `<div class="log-day">
-          <div class="log-date">${esc(heading)}</div>
+          <div class="log-date" aria-label="${esc(heading)}">${esc(heading)}</div>
           ${list.map(e => {
             const h = e.h;
             if (e.kind === 'rest') {
@@ -848,7 +851,7 @@ function computeMetricPool(habits, dates) {
                           label: daysSinceClean === 1 ? 'day since fully handled' : 'days since fully handled',
                           sub: daysSinceClean == null ? 'no fully handled day yet' : daysSinceClean === 0 ? 'every scheduled habit is handled today' : 'last fully handled day' },
         lifetime:       { value: lifetime, label: 'lifetime check-ins', sub: 'all time, across every habit' },
-        restLeft:       { value: restLeft, label: restLeft === 1 ? 'rest day left' : 'rest days left', sub: 'this month' },
+        restLeft:       { value: restLeft, label: restLeft === 1 ? 'rest day remaining' : 'rest days remaining', sub: 'this month' },
         improved:       improved
             ? { value: improved.h.name, label: 'most improved', sub: '+' + improved.delta + '% vs previous period' }
             : { value: '—', label: 'most improved', sub: 'not enough history yet' }
@@ -890,17 +893,21 @@ function renderStats() {
     const mode = chartMode();
     const buckets = buildBuckets(habits, dates, mode);
 
-    const modeHint = mode === 'day' ? "Share of each day's scheduled habits you finished."
-        : mode === 'week' ? 'Each bar is a week. Share of that week\'s scheduled habits you finished.'
-            : 'Each bar is a month. Share of that month\'s scheduled habits you finished.';
+    const modeLabel = mode === 'day' ? 'Daily completion' : mode === 'week' ? 'Weekly completion' : 'Monthly completion';
+    const modeHint = "Each bar shows the percentage of scheduled habits completed in that period.";
+    const totalHit = buckets.reduce((sum, b) => sum + b.hitShown, 0);
+    const totalOpp = buckets.reduce((sum, b) => sum + b.oppShown, 0);
+    const overallPct = totalOpp ? Math.round(totalHit / totalOpp * 100) : null;
 
     const trend = `<div class="panel">
-      <h3>Day by day${mode !== 'day' ? ` <span style="font-weight:400;color:var(--ink-3);font-size:12px">· by ${mode}</span>` : ''}</h3>
+      <h3>${modeLabel}</h3>
       <p class="hint">${modeHint}</p>
-      <div class="hbars" role="img" aria-label="Completion trend: ${esc(buckets.map(b => bucketLabel(b, mode) + ' ' + (b.pct == null ? 'nothing scheduled' : b.pct + ' percent')).join('; '))}">
+      <div class="chart-summary"><b>${overallPct == null ? '—' : overallPct + '%'}</b><span>overall · ${totalHit} of ${totalOpp} scheduled check-ins</span></div>
+      <div class="hbars${buckets.length > 12 ? ' dense' : ''}" role="img" aria-label="Completion trend: ${esc(buckets.map(b => bucketLabel(b, mode) + ' ' + (b.pct == null ? 'nothing scheduled' : b.pct + ' percent')).join('; '))}">
         ${buckets.map(b => {
             const h = b.pct == null ? 0 : Math.max(2, Math.round(b.pct * 1.24));
-            return `<i class="${b.pct ? '' : 'zero'}" style="height:${h || 2}px" title="${esc(bucketLabel(b, mode))} — ${b.pct == null ? 'nothing scheduled' : b.hitShown + ' of ' + b.oppShown}"></i>`;
+            const value = b.pct == null ? '—' : b.pct + '%';
+            return `<i class="hbar ${b.pct ? '' : 'zero'}" style="height:${h || 2}px" title="${esc(bucketLabel(b, mode))} — ${b.pct == null ? 'nothing scheduled' : b.hitShown + ' of ' + b.oppShown}" tabindex="0"><b class="hbar-value">${value}</b></i>`;
         }).join('')}
       </div>
       <div class="xlabels">
@@ -1142,7 +1149,6 @@ function openHabit(id) {
     $('h-desc').value = h ? h.desc : '';
     $('h-donemsg').value = h ? h.doneMsg : '';
     $('h-rest-limit').value = draft.restLimit;
-    $('h-icon-custom').value = '';
 
     $('cat-list').innerHTML = [...new Set(state.habits.map(x => x.category))]
         .map(c => `<option value="${esc(c)}">`).join('');
@@ -1279,7 +1285,7 @@ function openData() {
 
 function exportData() {
     const payload = {
-        app: 'tally', version: 2, exported: new Date().toISOString(),
+        app: 'tally', version: TallyStorage.VERSION, exported: new Date().toISOString(),
         settings: {
             theme: state.theme, accent: state.accent, density: state.density,
             horizon: state.horizon, statsCards: state.statsCards
@@ -1299,13 +1305,14 @@ function exportData() {
 function importData(file) {
     const r = new FileReader();
     r.onload = () => {
-        let parsed;
-        try { parsed = JSON.parse(r.result); }
-        catch (e) { toast("That file isn't valid JSON."); return; }
-        const arr = Array.isArray(parsed) ? parsed : Array.isArray(parsed.habits) ? parsed.habits : null;
-        if (!arr) { toast("Couldn't find any habits in that file."); return; }
-        const s = parsed && parsed.settings;
-        importDraft = { habits: arr.map(normHabit), settings: s };
+        let imported;
+        try {
+            imported = TallyStorage.parseImport(r.result, normHabit);
+        } catch (e) {
+            toast(e.message || "That file isn't valid Tally data.");
+            return;
+        }
+        importDraft = imported;
         $('m-import-summary').textContent = `${importDraft.habits.length} habit${importDraft.habits.length === 1 ? '' : 's'} found. Choose replace or merge.`;
         openModal('m-import');
     };
@@ -1326,32 +1333,7 @@ function applyImportedSettings(s) {
 }
 
 function mergeImportedHabits(imported) {
-    const merged = state.habits.map(h => JSON.parse(JSON.stringify(h)));
-    const byId = new Map(merged.map(h => [h.id, h]));
-    imported.forEach(incoming => {
-        const current = byId.get(incoming.id);
-        if (!current) {
-            merged.push(incoming);
-            byId.set(incoming.id, incoming);
-            return;
-        }
-        current.name = incoming.name;
-        current.category = incoming.category;
-        current.type = incoming.type;
-        current.target = incoming.target;
-        current.unit = incoming.unit;
-        current.color = incoming.color;
-        current.desc = incoming.desc;
-        current.doneMsg = incoming.doneMsg;
-        current.icon = incoming.icon;
-        current.days = incoming.days;
-        current.startDate = current.startDate < incoming.startDate ? current.startDate : incoming.startDate;
-        current.archived = incoming.archived;
-        current.entries = { ...current.entries, ...incoming.entries };
-        current.freezes = { ...current.freezes, ...incoming.freezes };
-        current.notes = { ...current.notes, ...incoming.notes };
-    });
-    return merged.map(normHabit);
+    return TallyCore.mergeHabits(state.habits, imported, normHabit);
 }
 
 function finishImport(mode) {
@@ -1568,11 +1550,15 @@ document.addEventListener('click', e => {
             state.todayFilter = el.dataset.filter; save(); renderToday(); break;
         case 'cat':
             state.category = el.dataset.cat; renderGrid(); scrollGridsToEnd(); break;
+        case 'cat-filter':
+            state.category = el.value; renderGrid(); scrollGridsToEnd(); break;
         case 'toggle-archived':
             state.showArchived = !state.showArchived; state.category = 'All'; renderGrid(); scrollGridsToEnd(); break;
 
         case 'l-habit':
             state.logFilter = el.dataset.id; renderLog(); break;
+        case 'log-filter':
+            state.logFilter = el.value; renderLog(); break;
         case 'l-clear':
             state.logQuery = ''; $('l-search').value = ''; renderLog(); break;
 
@@ -1608,7 +1594,7 @@ document.addEventListener('click', e => {
         }
         case 'h-color': draft.color = el.dataset.c; drawDraft(); break;
         case 'h-emoji': draft.icon = draft.icon === el.dataset.e ? '' : el.dataset.e; drawDraft(); break;
-        case 'h-icon-clear': draft.icon = ''; $('h-icon-custom').value = ''; drawDraft(); break;
+        case 'h-icon-clear': draft.icon = ''; drawDraft(); break;
         case 'archive': archiveHabit(); break;
         case 'phase': startNewPhase(); break;
 
@@ -1647,6 +1633,17 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('change', e => {
+    if (e.target.id === 'g-cats') {
+        state.category = e.target.value;
+        renderGrid();
+        scrollGridsToEnd();
+        return;
+    }
+    if (e.target.id === 'l-habits') {
+        state.logFilter = e.target.value;
+        renderLog();
+        return;
+    }
     const el = e.target.closest('[data-act="card"]');
     if (!el) return;
     const k = el.dataset.k;
@@ -1660,12 +1657,6 @@ document.addEventListener('change', e => {
 });
 
 document.addEventListener('input', e => {
-    if (e.target.id === 'h-icon-custom') {
-        const v = [...e.target.value].slice(0, 3).join('').trim();
-        draft.icon = v;
-        drawDraft();
-        return;
-    }
     if (e.target.id === 'l-search') {
         clearTimeout(e.target._t);
         const v = e.target.value.toLowerCase().trim();

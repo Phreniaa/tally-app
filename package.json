@@ -1,0 +1,9 @@
+{
+  "name": "tally",
+  "private": true,
+  "description": "A private, browser-only habit log",
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check app.js && node --check core.js && node --check storage.js"
+  }
+}
