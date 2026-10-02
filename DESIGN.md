@@ -1,6 +1,6 @@
 ---
 name: Tally
-description: A private, local-first habit log designed like a calm daily ledger.
+description: A private, local-first habit log designed for calm, visible momentum.
 colors:
   ground: "#E9ECE6"
   sheet: "#F7F8F4"
@@ -86,11 +86,17 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Quiet Logbook"**
+**Creative North Star: "Quiet Momentum"**
 
-Tally is a private habit log, not a performance dashboard. Its visual language borrows from a well-used daily ledger: clear ruled divisions, measured numbers, a small set of meaningful marks, and enough warmth to make returning feel easy. The interface is intentionally quiet so the act of recording remains the focus.
+Tally is a private habit log, not a performance dashboard. The product should feel good to open, make the next action obvious, and reward a quick glance at accumulated progress. Its editorial logbook foundation remains: ruled divisions, measured numbers, and clear state marks. The redesign adds more warmth, breathing room, and visual emphasis where progress deserves to be seen.
 
-The system is restrained and operational. It uses a pale ground, paper-like sheets, dark text, one configurable accent, and compact controls. Density is comfortable by default and can become compact for frequent use. The product supports light, warm, dark, and dim themes without changing its underlying hierarchy.
+The hierarchy is intentionally simple:
+- **Daily** is the fast operating surface for logging and leaving.
+- **Grid** is the visual proof of consistency and the emotional payoff.
+- **Stats** answers a few useful questions about momentum without becoming a dashboard.
+- **Logbook** remains the dependable detailed record.
+
+Light, warm, dark, and dim themes are coordinated moods with the same structure and behavior, not unrelated accent swaps.
 
 **Key Characteristics:**
 - Local-first, private, and calm
@@ -105,6 +111,7 @@ The palette is built from quiet neutrals with a single configurable accent. Colo
 ### Primary
 - **Moss:** #2E5545. The default action color, used for completion, primary actions, focus emphasis, and selected states.
 - **Moss Hover:** #3F7159. The responsive state for primary controls.
+- **Habit colors:** A curated set of earthy, botanical, mineral, and berry accents gives each habit identity. A native custom picker is available when the curated palette is not enough.
 
 ### Secondary
 - **Rest Blue:** #4A6E86. Identifies intentional rest days without implying failure.
@@ -196,6 +203,13 @@ Controls maintain visible keyboard focus with a 2px accent outline and offset. C
 - **Style:** Dialogs use a ruled header and footer, sheet background, 8px corners, and constrained width. Inputs use raised-sheet backgrounds and strong rule borders.
 - **Behavior:** Advanced habit options stay collapsed until requested. Dialogs preserve protected focus and provide explicit Cancel/Save actions.
 
+### Habit editor
+- **Basics:** Name and tracking mode are visible immediately.
+- **Schedule:** Days, rest limits, and tracking start date are grouped together.
+- **Appearance:** Icon, category, curated colors, custom color, and live preview share one section.
+- **Motivation:** Optional supporting copy and completion message stay available without competing with setup essentials.
+- Sections expand independently so the editor stays compact without forcing a multi-step wizard.
+
 ### Notes and Feedback
 - **Notes:** User-authored notes use a warm note-paper surface and a 1px rule accent, with italic text to distinguish reflection from status.
 - **Toasts:** Short-lived confirmations use an ink surface, ground-colored text, and the overlay shadow. They never replace a persistent error message.
@@ -203,7 +217,7 @@ Controls maintain visible keyboard focus with a 2px accent outline and offset. C
 ## Do's and Don'ts
 
 ### Do
-- Keep the page calm, ruled, and scan-friendly.
+- Keep the page calm, warm, ruled, and scan-friendly.
 - Use the accent for meaningful actions and state.
 - Preserve the distinction between done, partially logged, rest, missed, and unscheduled.
 - Keep counts and measured values tabular and easy to compare.

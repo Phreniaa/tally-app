@@ -11,7 +11,11 @@ const WEEKS = 53;
 const CELL = 12, GAP = 3;
 const DEFAULT_REST_LIMIT = 4;
 const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const PALETTE = ['#BC5B39', '#C08A2E', '#7D8B4A', '#4F8466', '#3E7F87', '#4E5D94', '#7C5A86', '#A85A72', '#5B6472', '#8A6A4B'];
+const PALETTE = [
+    '#BC5B39', '#C08A2E', '#7D8B4A', '#4F8466', '#3E7F87', '#4E5D94',
+    '#7C5A86', '#A85A72', '#5B6472', '#8A6A4B', '#C56C4F', '#76966F',
+    '#5E7F98', '#946A91'
+];
 const THEME_CYCLE = ['auto', 'light', 'warm', 'dark', 'dim'];
 const THEME_LABELS = { auto: 'auto', light: 'light', warm: 'warm', dark: 'dark', dim: 'dim' };
 const THEME_META = { light: '#E9ECE6', warm: '#F2E9D8', dark: '#101310', dim: '#1A1D22' };
@@ -908,6 +912,11 @@ function renderStats() {
     $('s-range').textContent = dates.length === 1 ? 'Today' : shortDate(dates[0]) + ' to ' + shortDate(dates[dates.length - 1]);
 
     const pool = computeMetricPool(habits, dates);
+    const momentumText = pool.consistency.value === '—'
+        ? 'Log a few days to see your momentum take shape.'
+        : pool.consistency.value + ' of scheduled check-ins are landing in this period.'
+          + (pool.improved && pool.improved.value !== '—' ? ' ' + pool.improved.value + ' is moving up.' : '');
+    const momentum = `<div class="stats-intro"><div><h2>Your momentum</h2><p>${esc(momentumText)}</p></div><span>${dates.length} day${dates.length === 1 ? '' : 's'}</span></div>`;
 
     const cards = state.statsCards.filter(k => pool[k]);
     const figures = cards.length
@@ -1017,7 +1026,7 @@ function renderStats() {
       </table>
     </div>`;
 
-    body.innerHTML = figures + trend + week + table;
+    body.innerHTML = momentum + figures + trend + week + table;
 }
 
 let lastFocus = null;
@@ -1187,7 +1196,9 @@ function openHabit(id) {
     draft.restLimit = h ? restLimit(h) : DEFAULT_REST_LIMIT;
 
     $('m-habit-title').textContent = h ? 'Edit habit' : 'New habit';
-    $('h-more-options').open = !!h;
+    $('h-schedule').open = !!h;
+    $('h-appearance').open = false;
+    $('h-motivation').open = false;
     $('h-id').value = h ? h.id : '';
     $('h-name').value = h ? h.name : '';
     $('h-target').value = h && h.type === 'numeric' ? h.target : '';
@@ -1202,6 +1213,7 @@ function openHabit(id) {
         .map(c => `<option value="${esc(c)}">`).join('');
     $('h-colors').innerHTML = PALETTE.map(c =>
         `<button type="button" data-act="h-color" data-c="${c}" style="background:${c}" aria-label="Colour ${c}"></button>`).join('');
+    $('h-custom-color').value = /^#[0-9a-f]{6}$/i.test(draft.color) ? draft.color : PALETTE[0];
     $('h-emoji').innerHTML = EMOJI.map(e =>
         `<button type="button" data-act="h-emoji" data-e="${esc(e)}" aria-label="Icon ${esc(e)}">${e}</button>`).join('');
 
@@ -1221,6 +1233,8 @@ function drawDraft() {
         `<button type="button" data-act="h-day" data-d="${i}" aria-pressed="${draft.days.includes(i)}">${d[0]}${d[1]}</button>`).join('');
     document.querySelectorAll('[data-act="h-color"]').forEach(b =>
         b.setAttribute('aria-pressed', String(b.dataset.c === draft.color)));
+    $('h-custom-color').value = /^#[0-9a-f]{6}$/i.test(draft.color) ? draft.color : PALETTE[0];
+    $('h-color-preview').style.setProperty('--preview-color', draft.color);
     document.querySelectorAll('[data-act="h-emoji"]').forEach(b =>
         b.setAttribute('aria-pressed', String(b.dataset.e === draft.icon)));
 }
@@ -1695,6 +1709,11 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('change', e => {
+    if (e.target.id === 'h-custom-color') {
+        draft.color = e.target.value;
+        drawDraft();
+        return;
+    }
     if (e.target.id === 'g-cats') {
         state.category = e.target.value;
         renderGrid();

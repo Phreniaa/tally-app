@@ -213,9 +213,10 @@
           </div>
         </div>
 
-        <details class="advanced-options" id="h-more-options">
-          <summary>More options <span>Schedule, rest days, and appearance</span></summary>
-          <div class="advanced-options-body">
+        <div class="setup-sections">
+          <details class="setup-section" id="h-schedule">
+            <summary><span><b>Schedule</b><small>When this habit counts</small></span><span class="section-chevron">+</span></summary>
+            <div class="setup-section-body">
             <div class="field">
               <span class="field-label">Which days does it count?</span>
               <div class="dow" id="h-days"></div>
@@ -233,7 +234,11 @@
               <input type="date" id="h-start-date" name="habit-start-date">
               <span class="help">Earlier dates stay neutral and do not count toward your stats.</span>
             </div>
-
+            </div>
+          </details>
+          <details class="setup-section" id="h-appearance">
+            <summary><span><b>Appearance</b><small>Make it yours</small></span><span class="section-chevron">+</span></summary>
+            <div class="setup-section-body">
             <div class="field">
               <span class="field-label">Icon <span style="font-weight:400;color:var(--ink-3)">— optional</span></span>
               <div class="emoji-grid" id="h-emoji"></div>
@@ -249,10 +254,21 @@
               </div>
               <div class="field">
                 <span class="field-label">Colour</span>
-                <div class="swatches" id="h-colors"></div>
+                <div class="color-picker-row">
+                  <div class="swatches" id="h-colors"></div>
+                  <label class="custom-color" title="Choose a custom colour">
+                    <input type="color" id="h-custom-color" aria-label="Custom habit colour">
+                    <span>Custom</span>
+                  </label>
+                </div>
+                <span class="color-preview" id="h-color-preview"><i></i><span>Preview</span></span>
               </div>
             </div>
-
+            </div>
+          </details>
+          <details class="setup-section" id="h-motivation">
+            <summary><span><b>Motivation</b><small>Optional words for the harder days</small></span><span class="section-chevron">+</span></summary>
+            <div class="setup-section-body">
             <div class="field">
               <label for="h-desc">Why it matters</label>
               <input type="text" id="h-desc" name="habit-reason" maxlength="90" placeholder="Optional — a reason to return on a bad day">
@@ -262,8 +278,9 @@
               <input type="text" id="h-donemsg" name="habit-done-message" maxlength="60" placeholder="Optional — a short message like “Nice.”">
               <span class="help">This replaces the default encouragement shown after you complete it.</span>
             </div>
-          </div>
-        </details>
+            </div>
+          </details>
+        </div>
       </div>
       <div class="modal-foot">
         <button type="button" class="btn btn-sm spacer hide" id="h-archive" data-act="archive">Archive</button>
