@@ -1070,8 +1070,8 @@ function openDay(id, dateKey, focusNote) {
     $('m-day-entry').classList.toggle('future-day', future);
     $('m-day-rest').classList.toggle('hide', future);
     $('m-day-rest-help').classList.toggle('hide', future);
-    $('m-day-form button[type="submit"]').textContent = future ? 'Save note' : 'Save';
-    $('m-day-form [data-act="clear-day"]').classList.toggle('hide', future && !h.notes[dateKey]);
+    document.querySelector('#m-day-form button[type="submit"]').textContent = future ? 'Save note' : 'Save';
+    document.querySelector('#m-day-form [data-act="clear-day"]').classList.toggle('hide', future && !h.notes[dateKey]);
     openModal('m-day');
     if (focusNote) setTimeout(() => $('m-day-note').focus(), 110);
 }
