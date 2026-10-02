@@ -65,7 +65,15 @@
   <main id="app-main">
   <section id="view-today" role="tabpanel" aria-labelledby="tab-today" aria-label="Daily habits">
     <div class="ledger-head">
-      <div class="count"><b id="t-done">0</b><span id="t-of">of 0 done today</span></div>
+      <div>
+        <div class="count"><b id="t-done">0</b><span id="t-of">of 0 done today</span></div>
+        <div class="daily-date" id="t-date-label"></div>
+      </div>
+      <div class="date-nav" aria-label="Daily date navigation">
+        <button class="icon-btn" data-act="day-nav" data-d="-1" aria-label="Previous day">‹</button>
+        <button class="btn btn-sm" data-act="day-today" id="t-today">Today</button>
+        <button class="icon-btn" data-act="day-nav" data-d="1" aria-label="Next day">›</button>
+      </div>
     </div>
 
     <div class="banner hide" id="backup-banner">
@@ -218,6 +226,12 @@
               <label for="h-rest-limit">Rest days per month</label>
               <input type="number" id="h-rest-limit" name="habit-rest-limit" min="0" max="31" step="1" placeholder="4">
               <span class="help">Optional. Set 0 to disallow rest days.</span>
+            </div>
+
+            <div class="field">
+              <label for="h-start-date">Start tracking on</label>
+              <input type="date" id="h-start-date" name="habit-start-date">
+              <span class="help">Earlier dates stay neutral and do not count toward your stats.</span>
             </div>
 
             <div class="field">

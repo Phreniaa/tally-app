@@ -69,6 +69,12 @@ Habit editing also supports a per-habit monthly rest-day limit (four by
 default) and a “Start new phase” action that archives the current definition
 while starting a fresh history from today.
 
+Each habit has an explicit “Start tracking” date. Dates before that boundary
+remain neutral in the Daily view, Grid, and stats, so an accidental old-day
+tap cannot create a misleading miss or streak. Daily navigation can backfill
+past dates and open future dates for planning notes; future completion and rest
+logging stay disabled until that day arrives.
+
 The optional “Why it matters” text appears before completion, while the
 optional “Shown when it's done” text appears after completion. The Daily view
 also exposes an “Add a note…” action before or after completion; notes remain

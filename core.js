@@ -42,7 +42,7 @@
         const firstLogged = Object.keys(entries).concat(Object.keys(freezes)).sort()[0];
         const created = h.createdAt && !Number.isNaN(new Date(h.createdAt).getTime()) ? dateKey(new Date(h.createdAt)) : null;
         const marks = [h.startDate, firstLogged, created].filter(isKey).sort();
-        const startDate = marks[0] || todayKey;
+        const startDate = isKey(h.trackingStartDate) ? h.trackingStartDate : marks[0] || todayKey;
         return {
             id: typeof h.id === 'string' && h.id ? h.id : 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
             name: String(h.name || 'Untitled').trim().slice(0, 60) || 'Untitled',
@@ -57,6 +57,7 @@
             days,
             restLimit: Number.isInteger(h.restLimit) ? Math.min(31, Math.max(0, h.restLimit)) : DEFAULT_REST_LIMIT,
             startDate,
+            trackingStartDate: isKey(h.trackingStartDate) ? h.trackingStartDate : startDate,
             archived: !!h.archived,
             entries, freezes, notes
         };
@@ -72,10 +73,12 @@
                 byId.set(incoming.id, incoming);
                 return;
             }
-            ['name', 'category', 'type', 'target', 'unit', 'color', 'desc', 'doneMsg', 'icon', 'days', 'archived'].forEach(field => {
+            const previousTrackingStart = existing.trackingStartDate || existing.startDate;
+            ['name', 'category', 'type', 'target', 'unit', 'color', 'desc', 'doneMsg', 'icon', 'days', 'archived', 'restLimit'].forEach(field => {
                 existing[field] = incoming[field];
             });
-            existing.startDate = existing.startDate < incoming.startDate ? existing.startDate : incoming.startDate;
+            existing.trackingStartDate = previousTrackingStart < incoming.trackingStartDate ? previousTrackingStart : incoming.trackingStartDate;
+            existing.startDate = existing.trackingStartDate;
             existing.entries = { ...existing.entries, ...incoming.entries };
             existing.freezes = { ...existing.freezes, ...incoming.freezes };
             existing.notes = { ...existing.notes, ...incoming.notes };

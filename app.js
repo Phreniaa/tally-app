@@ -94,6 +94,7 @@ const state = {
     statsCards: [...DEFAULT_CARDS],
     logFilter: 'all',
     logQuery: '',
+    dailyDate: key(today()),
     habits: []
 };
 
@@ -136,7 +137,7 @@ function normHabit(raw, i) {
     let created = null;
     if (h.createdAt) { const c = new Date(h.createdAt); if (!isNaN(c)) created = key(c); }
     const marks = [h.startDate, firstLogged, created].filter(isKey).sort();
-    const start = marks[0] || tKey;
+    const start = isKey(h.trackingStartDate) ? h.trackingStartDate : marks[0] || tKey;
 
     return {
         id: typeof h.id === 'string' && h.id ? h.id : uid(),
@@ -152,6 +153,7 @@ function normHabit(raw, i) {
         days,
         restLimit: Number.isInteger(h.restLimit) ? clamp(h.restLimit, 0, 31) : DEFAULT_REST_LIMIT,
         startDate: start,
+        trackingStartDate: isKey(h.trackingStartDate) ? h.trackingStartDate : start,
         archived: !!h.archived,
         entries, freezes, notes
     };
@@ -201,6 +203,16 @@ function save() {
 }
 
 function scheduled(h, d) { return h.days.includes(dow(d)); }
+function trackingStart(h) { return h.trackingStartDate || h.startDate; }
+function dailyDate() {
+    const t = today(), k = isKey(state.dailyDate) ? state.dailyDate : key(t);
+    return parseKey(k);
+}
+function dailyKey() { return key(dailyDate()); }
+function dueOnDate(d) {
+    const k = key(d);
+    return activeHabits().filter(h => scheduled(h, d) && k >= trackingStart(h));
+}
 function isRest(h, k) { return !!h.freezes[k]; }
 const STATE_LABELS = { full: 'Done', part: 'Part of the way', rest: 'Rest day', off: 'Not scheduled', miss: 'Missed', pending: 'Not logged yet' };
 
@@ -221,7 +233,7 @@ function dayState(h, d) {
     if (isRest(h, k)) return 'rest';
     if (isDone(h, k)) return 'full';
     if (h.type === 'numeric' && amount(h, k) > 0) return 'part';
-    if (!scheduled(h, d) || k < h.startDate) return 'off';
+    if (!scheduled(h, d) || k < trackingStart(h)) return 'off';
     if (k === t) return 'pending';
     return 'miss';
 }
@@ -234,9 +246,9 @@ function restLimit(h) { return Number.isInteger(h.restLimit) ? h.restLimit : DEF
 function stats(h) {
     if (statsCache.has(h.id)) return statsCache.get(h.id);
     const t = today(), tKey = key(t);
-    const start = parseKey(h.startDate);
+    const start = parseKey(trackingStart(h));
     let streak = 0;
-    for (let d = new Date(t); key(d) >= h.startDate; d = shift(d, -1)) {
+    for (let d = new Date(t); key(d) >= trackingStart(h); d = shift(d, -1)) {
         const k = key(d);
         if (!scheduled(h, d)) continue;
         if (isDone(h, k)) { streak++; continue; }
@@ -275,7 +287,7 @@ function stats(h) {
 }
 
 function activeHabits() { return state.habits.filter(h => !h.archived); }
-function dueToday() { const t = today(); return activeHabits().filter(h => scheduled(h, t) && key(t) >= h.startDate); }
+function dueToday() { return dueOnDate(today()); }
 function iconHtml(h) { return h.icon ? `<span class="h-icon" aria-hidden="true">${esc(h.icon)}</span>` : ''; }
 const DONE_MSGS = ['Nice.', 'Done.', 'Good.', 'Solid.', "That's one.", 'Logged.', 'Kept it.', 'Good one.'];
 function hashStr(s) {
@@ -289,12 +301,15 @@ function doneMsg(h, k) {
 }
 
 function renderToday() {
-    const t = today(), tKey = key(t);
-    const due = dueToday();
+    const t = dailyDate(), tKey = key(t), actualKey = key(today()), future = tKey > actualKey;
+    const due = dueOnDate(t);
     const done = due.filter(h => isDone(h, tKey) || isRest(h, tKey));
 
     $('t-done').textContent = done.length;
-    $('t-of').textContent = 'of ' + due.length + (due.length === 1 ? ' habit done today' : ' habits done today');
+    $('t-of').textContent = 'of ' + due.length + (due.length === 1 ? ' habit done ' : ' habits done ') + (future ? 'on this day' : tKey === actualKey ? 'today' : 'on this day');
+    $('t-date-label').textContent = future ? shortDate(t) + ' · planning notes only' : tKey === actualKey ? 'Today' : shortDate(t) + ' · backfill';
+    $('t-today').classList.toggle('hide', tKey === actualKey);
+    $('t-today').setAttribute('aria-hidden', String(tKey === actualKey));
 
     const off = activeHabits().length - due.length;
     $('t-offday').textContent = off > 0 ? off + (off === 1 ? ' habit off today' : ' habits off today') : '';
@@ -322,7 +337,7 @@ function renderToday() {
     box.classList.remove('hide');
 
     box.classList.add('sheet');
-    box.innerHTML = list.map(h => todayRow(h, tKey)).join('');
+    box.innerHTML = list.map(h => todayRow(h, tKey, future)).join('');
 }
 
 function emptyToday(totalActive, dueCount, doneCount) {
@@ -339,7 +354,7 @@ function emptyToday(totalActive, dueCount, doneCount) {
     return `<div class="empty"><h3>Nothing here</h3><p>Try a different filter.</p></div>`;
 }
 
-function todayRow(h, tKey) {
+function todayRow(h, tKey, future) {
     const s = stats(h);
     const rest = isRest(h, tKey);
     const done = isDone(h, tKey);
@@ -347,7 +362,9 @@ function todayRow(h, tKey) {
     const num = h.type === 'numeric';
     const val = amount(h, tKey);
 
-    const control = rest
+    const control = future
+        ? `<span class="planned-badge">Planning</span>`
+        : rest
         ? `<button class="check rest" data-act="toggle" data-id="${h.id}" title="Rest day — click to undo" aria-label="Remove rest day"><svg><use href="#i-rest"/></svg></button>`
         : num
             ? `<div class="stepper${done ? ' hit' : ''}">
@@ -366,7 +383,7 @@ function todayRow(h, tKey) {
     let noteBlock = '';
     if (note) {
         noteBlock = `<p class="note" data-act="open-note" data-id="${h.id}" data-date="${tKey}">${esc(note)}</p>`;
-    } else if (!rest) {
+    } else if (!rest || future) {
         noteBlock = `<span class="note-placeholder" data-act="open-note" data-id="${h.id}" data-date="${tKey}">Add a note…</span>`;
     }
 
@@ -400,7 +417,9 @@ function todayRow(h, tKey) {
 function toggleHabit(id) {
     const h = state.habits.find(x => x.id === id);
     if (!h) return;
-    const k = key(today());
+    const k = dailyKey();
+    if (k > key(today())) return;
+    const before = { entry: h.entries[k], hasEntry: Object.prototype.hasOwnProperty.call(h.entries, k), rest: h.freezes[k], hasRest: Object.prototype.hasOwnProperty.call(h.freezes, k) };
     if (isRest(h, k)) { delete h.freezes[k]; }
     else if (h.type === 'numeric') {
         if (isDone(h, k)) delete h.entries[k]; else h.entries[k] = h.target;
@@ -408,17 +427,29 @@ function toggleHabit(id) {
         if (h.entries[k]) delete h.entries[k]; else h.entries[k] = true;
     }
     save(); render();
+    toast(h.name + ' · ' + medDate(parseKey(k)) + (isDone(h, k) || isRest(h, k) ? ' logged.' : ' cleared.'), 'Undo', () => {
+        if (before.hasEntry) h.entries[k] = before.entry; else delete h.entries[k];
+        if (before.hasRest) h.freezes[k] = before.rest; else delete h.freezes[k];
+        save(); render();
+    });
 }
 
 function stepHabit(id, dir) {
     const h = state.habits.find(x => x.id === id);
     if (!h) return;
-    const k = key(today());
+    const k = dailyKey();
+    if (k > key(today())) return;
+    const before = { entry: h.entries[k], hasEntry: Object.prototype.hasOwnProperty.call(h.entries, k), rest: h.freezes[k], hasRest: Object.prototype.hasOwnProperty.call(h.freezes, k) };
     const step = h.target <= 3 ? 0.5 : h.target <= 20 ? 1 : 5;
     const next = Math.max(0, round(amount(h, k) + dir * step));
     if (next > 0) h.entries[k] = next; else delete h.entries[k];
     delete h.freezes[k];
     save(); render();
+    toast(h.name + ' · updated.', 'Undo', () => {
+        if (before.hasEntry) h.entries[k] = before.entry; else delete h.entries[k];
+        if (before.hasRest) h.freezes[k] = before.rest; else delete h.freezes[k];
+        save(); render();
+    });
 }
 
 function buildCalendar() {
@@ -700,7 +731,7 @@ function renderLog() {
             return `<div class="log-entry">
               <span class="log-icon">${h.icon ? esc(h.icon) : `<span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${h.color};margin-top:6px"></span>`}</span>
               <div>
-                <div class="log-habit">${esc(h.name)} <em>${esc(h.category)}</em></div>
+                <div class="log-habit">${esc(h.name)} <em>${esc(h.category)}${e.k > tKey ? ' · planned' : ''}</em></div>
                 <div class="note">${esc(e.note)}</div>
               </div>
             </div>`;
@@ -715,7 +746,7 @@ function horizonDates() {
     if (state.horizon === '7') n = 7;
     else if (state.horizon === '90') n = 90;
     else if (state.horizon === 'all') {
-        const starts = activeHabits().map(h => h.startDate).sort();
+        const starts = activeHabits().map(trackingStart).sort();
         n = starts.length ? Math.round((t - parseKey(starts[0])) / 86400000) + 1 : 1;
         n = clamp(n, 1, 3650);
     }
@@ -752,7 +783,7 @@ function buildBuckets(habits, dates, mode) {
         const b = map.get(bKey);
         b.lastDate = d;
         habits.forEach(h => {
-            if (!scheduled(h, d) || k < h.startDate) return;
+            if (!scheduled(h, d) || k < trackingStart(h)) return;
             if (isRest(h, k)) { b.rest++; return; }
             b.due++;
             if (isDone(h, k)) b.hit++;
@@ -782,7 +813,7 @@ function computeMetricPool(habits, dates) {
         const k = key(d);
         let dayOpps = 0, dayHits = 0, dayRests = 0, dayDue = 0;
         habits.forEach(h => {
-            if (!scheduled(h, d) || k < h.startDate) return;
+            if (!scheduled(h, d) || k < trackingStart(h)) return;
             if (isRest(h, k)) { dayRests++; return; }
             dayDue++;
             if (isDone(h, k)) { dayHits++; dayOpps++; }
@@ -799,7 +830,7 @@ function computeMetricPool(habits, dates) {
         const k = key(d);
         let due = 0, done = 0;
         habits.forEach(h => {
-            if (!scheduled(h, d) || k < h.startDate) return;
+            if (!scheduled(h, d) || k < trackingStart(h)) return;
             due++;
             if (isRest(h, k) || isDone(h, k)) done++;
         });
@@ -822,7 +853,7 @@ function computeMetricPool(habits, dates) {
             let o = 0, hit = 0;
             for (let d = new Date(a); key(d) <= key(b); d = shift(d, 1)) {
                 const k = key(d);
-                if (!scheduled(h, d) || k < h.startDate || isRest(h, k)) continue;
+                if (!scheduled(h, d) || k < trackingStart(h) || isRest(h, k)) continue;
                 if (isDone(h, k)) { hit++; o++; }
                 else if (k !== tKey) o++;
             }
@@ -923,7 +954,7 @@ function renderStats() {
     dates.forEach(d => {
         const k = key(d);
         habits.forEach(h => {
-            if (!scheduled(h, d) || k < h.startDate) return;
+            if (!scheduled(h, d) || k < trackingStart(h)) return;
             if (isRest(h, k)) return;
             if (isDone(h, k)) { byDow[dow(d)][0]++; byDow[dow(d)][1]++; }
             else if (k !== tKey) byDow[dow(d)][1]++;
@@ -953,7 +984,7 @@ function renderStats() {
         let o = 0, hit = 0;
         dates.forEach(d => {
             const k = key(d);
-            if (!scheduled(h, d) || k < h.startDate || isRest(h, k)) return;
+            if (!scheduled(h, d) || k < trackingStart(h) || isRest(h, k)) return;
             if (isDone(h, k)) { hit++; o++; }
             else if (k !== tKey) o++;
         });
@@ -1020,27 +1051,37 @@ function openConfirm(title, msg, fn, label) {
 
 function openDay(id, dateKey, focusNote) {
     const h = state.habits.find(x => x.id === id);
-    if (!h || !isKey(dateKey) || dateKey > key(today())) return;
+    if (!h || !isKey(dateKey)) return;
+    const future = dateKey > key(today());
     dayDraft.id = id;
     dayDraft.dateKey = dateKey;
-    dayDraft.rest = isRest(h, dateKey);
-    dayDraft.value = amount(h, dateKey);
-    dayDraft.done = isDone(h, dateKey);
+    dayDraft.rest = future ? false : isRest(h, dateKey);
+    dayDraft.value = future ? 0 : amount(h, dateKey);
+    dayDraft.done = future ? false : isDone(h, dateKey);
 
     $('m-day-title').textContent = (h.icon ? h.icon + ' ' : '') + h.name;
     const d = parseKey(dateKey);
-    const off = !scheduled(h, d) ? ' — not a scheduled day' : dateKey === key(today()) ? ' — today' : '';
+    const off = future ? ' — planning note only' : !scheduled(h, d) ? ' — not a scheduled day' : dateKey === key(today()) ? ' — today' : '';
     $('m-day-date').textContent = shortDate(d) + off;
     $('m-day-note').value = h.notes[dateKey] || '';
 
     drawDayEntry(h);
     drawRestBtn(h);
+    $('m-day-entry').classList.toggle('future-day', future);
+    $('m-day-rest').classList.toggle('hide', future);
+    $('m-day-rest-help').classList.toggle('hide', future);
+    $('m-day-form button[type="submit"]').textContent = future ? 'Save note' : 'Save';
+    $('m-day-form [data-act="clear-day"]').classList.toggle('hide', future && !h.notes[dateKey]);
     openModal('m-day');
     if (focusNote) setTimeout(() => $('m-day-note').focus(), 110);
 }
 
 function drawDayEntry(h) {
     const box = $('m-day-entry');
+    if (dayDraft.dateKey > key(today())) {
+        box.innerHTML = `<p class="callout">Future dates are for reminders and planning notes. Completion and rest logging will be available on the day.</p>`;
+        return;
+    }
     if (dayDraft.rest) {
         box.innerHTML = `<p class="callout">Marked as a rest day. Your streak carries on and the day isn't counted as a miss.</p>`;
         return;
@@ -1103,10 +1144,11 @@ function saveDay(e) {
     const h = state.habits.find(x => x.id === dayDraft.id);
     if (!h) return;
     const k = dayDraft.dateKey;
-    if (dayDraft.rest) {
+    const future = k > key(today());
+    if (!future && dayDraft.rest) {
         h.freezes[k] = true;
         delete h.entries[k];
-    } else {
+    } else if (!future) {
         delete h.freezes[k];
         if (h.type === 'numeric') {
             if (dayDraft.value > 0) h.entries[k] = dayDraft.value; else delete h.entries[k];
@@ -1116,7 +1158,6 @@ function saveDay(e) {
     }
     const note = $('m-day-note').value.trim();
     if (note) h.notes[k] = note.slice(0, 400); else delete h.notes[k];
-    if (k < h.startDate) h.startDate = k;
     save(); closeModal('m-day'); render();
 }
 
@@ -1124,9 +1165,15 @@ function clearDay() {
     const h = state.habits.find(x => x.id === dayDraft.id);
     if (!h) return;
     const k = dayDraft.dateKey;
+    const before = { entry: h.entries[k], hasEntry: Object.prototype.hasOwnProperty.call(h.entries, k), rest: h.freezes[k], hasRest: Object.prototype.hasOwnProperty.call(h.freezes, k), note: h.notes[k], hasNote: Object.prototype.hasOwnProperty.call(h.notes, k) };
     delete h.entries[k]; delete h.freezes[k]; delete h.notes[k];
     save(); closeModal('m-day'); render();
-    toast(shortDate(parseKey(k)) + ' cleared.');
+    toast(shortDate(parseKey(k)) + ' cleared.', 'Undo', () => {
+        if (before.hasEntry) h.entries[k] = before.entry;
+        if (before.hasRest) h.freezes[k] = before.rest;
+        if (before.hasNote) h.notes[k] = before.note;
+        save(); render();
+    });
 }
 
 function openHabit(id) {
@@ -1149,6 +1196,7 @@ function openHabit(id) {
     $('h-desc').value = h ? h.desc : '';
     $('h-donemsg').value = h ? h.doneMsg : '';
     $('h-rest-limit').value = draft.restLimit;
+    $('h-start-date').value = h ? trackingStart(h) : key(today());
 
     $('cat-list').innerHTML = [...new Set(state.habits.map(x => x.category))]
         .map(c => `<option value="${esc(c)}">`).join('');
@@ -1193,11 +1241,15 @@ function saveHabit(e) {
         desc: $('h-desc').value.trim(),
         doneMsg: $('h-donemsg').value.trim(),
         restLimit: clamp(parseInt($('h-rest-limit').value, 10) || 0, 0, 31),
+        trackingStartDate: isKey($('h-start-date').value) && $('h-start-date').value <= key(today()) ? $('h-start-date').value : key(today()),
         days: [...draft.days].sort((a, b) => a - b)
     };
     if (draft.id) {
         const h = state.habits.find(x => x.id === draft.id);
-        if (h) Object.assign(h, payload);
+        if (h) {
+            Object.assign(h, payload);
+            h.startDate = payload.trackingStartDate;
+        }
     } else {
         state.habits.push(normHabit({ ...payload, startDate: key(today()) }, state.habits.length));
     }
@@ -1544,6 +1596,16 @@ document.addEventListener('click', e => {
         case 'step': stepHabit(id, +el.dataset.d); break;
         case 'open-day': openDay(id, el.dataset.date); break;
         case 'open-note': openDay(id, el.dataset.date, true); break;
+        case 'day-nav': {
+            const next = shift(dailyDate(), +el.dataset.d);
+            state.dailyDate = key(next);
+            renderToday();
+            break;
+        }
+        case 'day-today':
+            state.dailyDate = key(today());
+            renderToday();
+            break;
         case 'open-data': openData(); break;
         case 'close': closeModal(el.dataset.modal); break;
         case 't-filter':

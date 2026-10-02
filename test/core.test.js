@@ -38,6 +38,18 @@ test('normalizes habit input and drops future or invalid entries', () => {
     assert.deepEqual(habit.notes, { '2026-09-23': 'useful note' });
 });
 
+test('preserves an explicit tracking start boundary', () => {
+    const habit = normalize({
+        id: 'boundary',
+        startDate: '2026-09-01',
+        trackingStartDate: '2026-09-20',
+        entries: { '2026-09-01': true }
+    }, 0);
+
+    assert.equal(habit.trackingStartDate, '2026-09-20');
+    assert.equal(habit.startDate, '2026-09-20');
+});
+
 test('merges matching habits without losing existing history', () => {
     const current = [normalize({
         id: 'h1', name: 'Old', startDate: '2026-09-01',
@@ -54,6 +66,15 @@ test('merges matching habits without losing existing history', () => {
     assert.equal(merged[0].startDate, '2026-09-01');
     assert.deepEqual(merged[0].entries, { '2026-09-01': true, '2026-09-02': true });
     assert.deepEqual(merged[0].notes, { '2026-09-01': 'first', '2026-09-02': 'second' });
+});
+
+test('merges rest limits and tracking boundaries', () => {
+    const current = [normalize({ id: 'h1', restLimit: 4, trackingStartDate: '2026-09-01' }, 0)];
+    const incoming = [normalize({ id: 'h1', restLimit: 2, trackingStartDate: '2026-09-20' }, 0)];
+
+    const merged = TallyCore.mergeHabits(current, incoming, normalize);
+    assert.equal(merged[0].restLimit, 2);
+    assert.equal(merged[0].trackingStartDate, '2026-09-01');
 });
 
 test('writes a versioned envelope and preserves the previous snapshot', () => {
